@@ -3,6 +3,7 @@ import { fabric } from "fabric";
 import { FrameType, frameDimensions, frameAssets } from "@/assets/frames";
 import { usePhotoEditorFrameLoader } from "./usePhotoEditorFrameLoader";
 import { zoomIn, zoomOut, resetPosition } from "./photoEditorUtils";
+import { drawBlurredBackground } from '@/utils/imageOptimizer';
 
 function getMobileMargin() {
   if (typeof window !== "undefined" && window.innerWidth <= 600) return 20;
@@ -260,7 +261,21 @@ export function usePhotoEditorCanvas({
         backgroundColor: "#000",
         preserveObjectStacking: true
       });
-
+      // Add white background as the very first object in export canvas
+      const whiteRect = new fabric.Rect({
+        left: 0,
+        top: 0,
+        width: exportW,
+        height: exportH,
+        fill: 'white',
+        selectable: false,
+        evented: false,
+        originX: 'left',
+        originY: 'top',
+      });
+      exportFabric.add(whiteRect);
+      exportFabric.insertAt(whiteRect, 0, false);
+      // User image
       await new Promise<void>((resolve, reject) => {
         try {
           fabric.Image.fromURL(userImage, (img) => {
@@ -293,6 +308,19 @@ export function usePhotoEditorCanvas({
               // Calculate new position in export canvas
               const exportLeft = exportW / 2 + (relativeLeft * exportW);
               const exportTop = exportH / 2 + (relativeTop * exportH);
+
+              // If image is too short, draw blurred background
+              const imgAspect = img.width! / img.height!;
+              const frameAspect = exportW / exportH;
+              if (imgAspect < frameAspect) {
+                const ctx = exportCanvas.getContext('2d');
+                if (ctx) {
+                  // Draw blurred background with increased blur radius and opacity
+                  ctx.globalAlpha = 0.3; // Set opacity for the blurred background
+                  drawBlurredBackground(ctx, img.getElement(), exportW, exportH, 96);
+                  ctx.globalAlpha = 1.0; // Reset opacity for the main image
+                }
+              }
 
               // Apply the calculated transformations
               img.set({

@@ -77,4 +77,28 @@ function compressImage(img: HTMLImageElement, dimensions: ImageDimensions): stri
   
   // Fallback to PNG with high quality
   return canvas.toDataURL('image/png', 1.0);
+}
+
+// Draw a blurred background fill for a canvas
+export function drawBlurredBackground(ctx: CanvasRenderingContext2D, img: HTMLImageElement, frameW: number, frameH: number, blurPx: number = 32) {
+  // Draw the image scaled to cover the frame
+  const imgAspect = img.width / img.height;
+  const frameAspect = frameW / frameH;
+  let bgW, bgH;
+  if (imgAspect > frameAspect) {
+    // Image is wider
+    bgH = frameH;
+    bgW = img.width * (frameH / img.height);
+  } else {
+    // Image is taller
+    bgW = frameW;
+    bgH = img.height * (frameW / img.width);
+  }
+  // Center the image
+  const x = (frameW - bgW) / 2;
+  const y = (frameH - bgH) / 2;
+  ctx.save();
+  ctx.filter = `blur(${blurPx}px) brightness(0.8)`;
+  ctx.drawImage(img, x, y, bgW, bgH);
+  ctx.restore();
 } 

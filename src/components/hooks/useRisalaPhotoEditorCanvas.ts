@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { fabric } from "fabric";
+import { drawBlurredBackground } from '@/utils/imageOptimizer';
 
 const FRAME_SRC = "/risala/frame.png";
 
@@ -186,6 +187,42 @@ export function useRisalaPhotoEditorCanvas() {
           }
         }
         scale *= 1.05;
+        // If image is too short, add white background and blurred/low-opacity duplicate
+        if (imgAspect < frameAspect) {
+          // Add white background
+          const whiteRect = new fabric.Rect({
+            left: 0,
+            top: 0,
+            width: frameW,
+            height: frameH,
+            fill: 'white',
+            selectable: false,
+            evented: false,
+            originX: 'left',
+            originY: 'top',
+          });
+          canvas.add(whiteRect);
+          canvas.sendToBack(whiteRect);
+          // Add blurred, low-opacity duplicate
+          fabric.Image.fromURL(userImage, (bgImg) => {
+            bgImg.set({
+              left: frameW / 2,
+              top: frameH / 2,
+              originX: 'center',
+              originY: 'center',
+              selectable: false,
+              evented: false,
+              scaleX: frameW / bgImg.width!,
+              scaleY: frameH / bgImg.height!,
+              opacity: 0.2,
+            });
+            bgImg.filters = [new fabric.Image.filters.Blur({ blur: 1.0 })];
+            bgImg.applyFilters();
+            canvas.add(bgImg);
+            canvas.sendToBack(bgImg);
+            canvas.renderAll();
+          }, { crossOrigin: 'anonymous' });
+        }
         img.set({
           scaleX: scale,
           scaleY: scale,
@@ -260,6 +297,15 @@ export function useRisalaPhotoEditorCanvas() {
           const exportScale = currentScale * scaleRatio;
           const exportLeft = exportW / 2 + (relativeLeft * exportW);
           const exportTop = exportH / 2 + (relativeTop * exportH);
+          // If image is too short, draw blurred background
+          const imgAspect = img.width! / img.height!;
+          const frameAspect = exportW / exportH;
+          if (imgAspect < frameAspect) {
+            const ctx = exportCanvas.getContext('2d');
+            if (ctx) {
+              drawBlurredBackground(ctx, img.getElement(), exportW, exportH, 32);
+            }
+          }
           img.set({
             scaleX: exportScale,
             scaleY: exportScale,
