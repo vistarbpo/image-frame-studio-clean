@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer frame -->
+  <rect x="64" y="64" width="384" height="384" rx="32" stroke="#FF5533" stroke-width="24" fill="none"/>
+  <!-- Inner frame -->
+  <rect x="128" y="128" width="256" height="256" rx="16" stroke="#FF5533" stroke-width="16" fill="none"/>
+  <!-- Corner accents -->
+  <path d="M64 96 L96 96 L96 64" stroke="#FF5533" stroke-width="24" fill="none"/>
+  <path d="M416 96 L384 96 L384 64" stroke="#FF5533" stroke-width="24" fill="none"/>
+  <path d="M64 416 L96 416 L96 448" stroke="#FF5533" stroke-width="24" fill="none"/>
+  <path d="M416 416 L384 416 L384 448" stroke="#FF5533" stroke-width="24" fill="none"/>
+  <!-- Center dot -->
+  <circle cx="256" cy="256" r="16" fill="#FF5533"/>
+</svg> 
