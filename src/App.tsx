@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import RisalaFramePage from "./pages/risala";
 import TaifRisalaFramePage from "./pages/taif-risala";
+import Milad1FramePage from "./pages/milad1";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +30,7 @@ const App: React.FC = () => {
               <Route path="/" element={<Index />} />
               <Route path="/risala" element={<RisalaFramePage />} />
               <Route path="/taif-risala" element={<TaifRisalaFramePage />} />
+              <Route path="/milad1" element={<Milad1FramePage />} />
               {/* Redirect all unknown routes to home */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

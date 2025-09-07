@@ -18,6 +18,12 @@ export const frameAssets = {
   'taif-risala': {
     bottom: '/taif-risala/frame.png',
   },
+  'milad1': {
+    bottom: '/milad1/frame.png',
+  },
+  'jizan-risala': {
+    bottom: '/jizan-risala/frame.png',
+  },
 };
 
 export const frameDimensions = {
@@ -26,6 +32,8 @@ export const frameDimensions = {
   vertical: { width: 2400, height: 3200 },
   risala: { width: 1080, height: 1350 }, // Replace with actual PNG size if different
   'taif-risala': { width: 1080, height: 1350 }, // Replace with actual PNG size if different
+  'milad1': { width: 1080, height: 1350 }, // Replace with actual PNG size if different
+  'jizan-risala': { width: 1080, height: 1350 }, // Replace with actual PNG size if different
 };
 
-export type FrameType = 'square' | 'horizontal' | 'vertical' | 'risala' | 'taif-risala';
+export type FrameType = 'square' | 'horizontal' | 'vertical' | 'risala' | 'taif-risala' | 'milad1' | 'jizan-risala';
