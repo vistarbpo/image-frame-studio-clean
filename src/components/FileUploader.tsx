@@ -35,7 +35,7 @@ export function FileUploader({ onFileSelected, isUploading }: FileUploaderProps)
       />
       <Button 
         onClick={handleClick}
-        className="bg-[#FF5533] hover:bg-[#FF4422] text-white rounded-full px-6 py-6 w-full max-w-xs"
+        className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white rounded-full px-6 py-6 w-full max-w-xs shadow-lg shadow-primary/25 transition-all duration-200 hover:scale-105"
         disabled={isUploading}
       >
         {isUploading ? (

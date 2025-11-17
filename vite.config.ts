@@ -9,6 +9,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    // Disable caching for images in development to see frame updates immediately
+    headers: {
+      'Cache-Control': 'no-store',
+    },
   },
   plugins: [
     react(),

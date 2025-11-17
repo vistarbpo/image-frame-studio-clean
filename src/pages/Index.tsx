@@ -12,7 +12,7 @@ const PhotoEditor = lazy(() => import("@/components/PhotoEditor").then(module =>
 // Loading component for Suspense
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-64">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF5533]"></div>
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
   </div>
 );
 
@@ -49,39 +49,44 @@ const Index = () => {
       <div className="flex-grow pb-20">
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold text-[#FF5533]">Image Frame Studio</h1>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-purple-500 to-primary bg-clip-text text-transparent">
+              Image Frame Studio
+            </h1>
           </div>
           {!userImage ? (
         // Frame selection and upload view
         <div className="flex flex-col items-center w-full px-4 animate-fade-in">
           {/* Frame preview */}
-          <div className="w-full max-w-md mb-6">
-            <img 
-              src={frameAssets[selectedFrame].bottom}
-              alt={`${selectedFrame} frame`}
-              className="w-full h-auto rounded-md border border-gray-800 shadow-lg"
-            />
+          <div className="w-full max-w-md mb-8 relative group">
+            <div className="absolute -inset-1 bg-gradient-to-r from-primary via-purple-500 to-primary rounded-xl opacity-20 group-hover:opacity-30 blur transition-opacity"></div>
+            <div className="relative bg-card/50 backdrop-blur-sm rounded-xl p-4 border border-border/50 shadow-2xl">
+              <img 
+                src={frameAssets[selectedFrame].bottom}
+                alt={`${selectedFrame} frame`}
+                className="w-full h-auto rounded-lg shadow-lg"
+              />
+            </div>
           </div>
           {/* Frame selector */}
-          <div className="flex gap-2 justify-center mb-4">
+          <div className="flex gap-3 justify-center mb-6">
             <Button
               variant={selectedFrame === 'square' ? "default" : "outline"}
               onClick={() => handleFrameSelect('square')}
-              className="rounded-full"
+              className="rounded-full px-6 py-2 transition-all duration-200 hover:scale-105"
             >
               Square
             </Button>
             <Button
               variant={selectedFrame === 'horizontal' ? "default" : "outline"}
               onClick={() => handleFrameSelect('horizontal')}
-              className="rounded-full"
+              className="rounded-full px-6 py-2 transition-all duration-200 hover:scale-105"
             >
               Horizontal
             </Button>
             <Button
               variant={selectedFrame === 'vertical' ? "default" : "outline"}
               onClick={() => handleFrameSelect('vertical')}
-              className="rounded-full"
+              className="rounded-full px-6 py-2 transition-all duration-200 hover:scale-105"
             >
               Vertical
             </Button>
@@ -90,10 +95,13 @@ const Index = () => {
           <div className="mt-4 mb-8 w-full flex justify-center">
             <label 
               htmlFor="file-upload"
-              className={`bg-[#FF5533] hover:bg-[#FF4422] text-white rounded-full px-6 py-3 cursor-pointer w-full max-w-xs flex items-center justify-center ${isUploading ? 'opacity-70' : ''}`}
+              className={`bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white rounded-full px-8 py-4 cursor-pointer w-full max-w-xs flex items-center justify-center shadow-lg shadow-primary/25 transition-all duration-200 hover:scale-105 hover:shadow-xl hover:shadow-primary/40 font-medium ${isUploading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {isUploading ? (
-                "Uploading..."
+                <span className="flex items-center">
+                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
+                  Uploading...
+                </span>
               ) : (
                 <>
                   <Upload className="mr-2 h-5 w-5" /> Upload photo

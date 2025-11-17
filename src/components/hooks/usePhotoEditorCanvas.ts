@@ -336,9 +336,13 @@ export function usePhotoEditorCanvas({
 
               exportFabric.add(img);
 
-              // Load and position the frame overlay
+              // Load and position the frame overlay (with cache-busting)
+              const baseFrameUrl = frameAssets[frameType].bottom;
+              const frameUrlWithCache = baseFrameUrl.includes('?') 
+                ? `${baseFrameUrl}&t=${Date.now()}` 
+                : `${baseFrameUrl}?t=${Date.now()}`;
               fabric.Image.fromURL(
-                frameAssets[frameType].bottom,
+                frameUrlWithCache,
                 (overlayImg) => {
                   if (!overlayImg) {
                     reject(new Error("Failed to load frame overlay"));
@@ -408,7 +412,7 @@ export function usePhotoEditorCanvas({
                                     line-height: 1.5;
                                   }
                                   .button { 
-                                    background: #FF5533; 
+                                    background: hsl(262, 83%, 58%); 
                                     color: white; 
                                     border: none; 
                                     padding: 12px 24px; 

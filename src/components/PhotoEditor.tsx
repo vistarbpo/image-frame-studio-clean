@@ -26,13 +26,16 @@ export function PhotoEditor({ frameType, userImage, onBack }: PhotoEditorProps) 
     <div className="w-full flex flex-col items-center animate-fade-in">
       {/* Canvas container */}
       <div
-        className="w-full max-w-md mb-6 bg-black"
+        className="w-full max-w-md mb-8 relative group"
         style={mobileMarginStyle}
       >
-        <canvas
-          ref={canvasRef}
-          className="w-full h-auto border border-gray-800 shadow-lg"
-        />
+        <div className="absolute -inset-1 bg-gradient-to-r from-primary via-purple-500 to-primary rounded-xl opacity-20 group-hover:opacity-30 blur transition-opacity"></div>
+        <div className="relative bg-card/50 backdrop-blur-sm rounded-xl p-4 border border-border/50 shadow-2xl">
+          <canvas
+            ref={canvasRef}
+            className="w-full h-auto rounded-lg shadow-lg"
+          />
+        </div>
       </div>
 
       {/* Controls */}

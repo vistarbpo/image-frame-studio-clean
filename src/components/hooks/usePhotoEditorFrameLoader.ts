@@ -26,7 +26,11 @@ export function usePhotoEditorFrameLoader({
     canvas.getObjects().forEach((obj) => canvas.remove(obj));
 
     const { width: viewW, height: viewH } = getCanvasDisplaySize();
-    const frameUrl = frameAssets[frameType].bottom;
+    // Add cache-busting query parameter to force fresh frame loads
+    const baseFrameUrl = frameAssets[frameType].bottom;
+    const frameUrl = baseFrameUrl.includes('?') 
+      ? `${baseFrameUrl}&t=${Date.now()}` 
+      : `${baseFrameUrl}?t=${Date.now()}`;
 
     // 1. Add white background as the very bottom layer
     const whiteRect = new fabric.Rect({
@@ -101,7 +105,7 @@ export function usePhotoEditorFrameLoader({
             hasControls: true,
             hasBorders: false,
             lockRotation: true,
-            cornerColor: "#FF5533",
+            cornerColor: "hsl(262, 83%, 58%)",
             cornerStrokeColor: "white",
             transparentCorners: false,
             cornerSize: 10,
@@ -141,7 +145,7 @@ export function usePhotoEditorFrameLoader({
           hasControls: true,
           hasBorders: false,
           lockRotation: true,
-          cornerColor: "#FF5533",
+            cornerColor: "hsl(262, 83%, 58%)",
           cornerStrokeColor: "white",
           transparentCorners: false,
           cornerSize: 10,

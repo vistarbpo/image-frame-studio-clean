@@ -161,8 +161,9 @@ export function useRisalaPhotoEditorCanvas() {
   useEffect(() => {
     if (!canvas || !userImage) return;
     canvas.getObjects().forEach((obj) => canvas.remove(obj));
-    // Load frame image to get its size
-    fabric.Image.fromURL(FRAME_SRC, (frameImg) => {
+    // Load frame image to get its size (with cache-busting)
+    const frameUrlWithCache = `${FRAME_SRC}?t=${Date.now()}`;
+    fabric.Image.fromURL(frameUrlWithCache, (frameImg) => {
       if (!frameImg) return;
       setFrameSize({ width: frameImg.width!, height: frameImg.height! });
       setFrameImageObj(frameImg);
@@ -234,7 +235,7 @@ export function useRisalaPhotoEditorCanvas() {
           hasControls: true,
           hasBorders: false,
           lockRotation: true,
-          cornerColor: "#FF5533",
+          cornerColor: "hsl(262, 83%, 58%)",
           cornerStrokeColor: "white",
           transparentCorners: false,
           cornerSize: 10,
@@ -318,7 +319,8 @@ export function useRisalaPhotoEditorCanvas() {
           });
           exportFabric.add(img);
           // Frame overlay
-          fabric.Image.fromURL(FRAME_SRC, (overlayImg) => {
+          const frameUrlWithCache = `${FRAME_SRC}?t=${Date.now()}`;
+          fabric.Image.fromURL(frameUrlWithCache, (overlayImg) => {
             if (!overlayImg) return resolve();
             overlayImg.set({
               scaleX: exportW / overlayImg.width!,
@@ -351,7 +353,7 @@ export function useRisalaPhotoEditorCanvas() {
                         body { margin: 0; padding: 20px; background: #000; display: flex; flex-direction: column; align-items: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
                         img { max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
                         .instructions { color: white; text-align: center; margin: 20px 0; line-height: 1.5; }
-                        .button { background: #FF5533; color: white; border: none; padding: 12px 24px; border-radius: 24px; margin: 20px 0; cursor: pointer; font-size: 16px; font-weight: 600; box-shadow: 0 2px 8px rgba(255,85,51,0.3); width: 100%; max-width: 300px; }
+                        .button { background: hsl(262, 83%, 58%); color: white; border: none; padding: 12px 24px; border-radius: 24px; margin: 20px 0; cursor: pointer; font-size: 16px; font-weight: 600; box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3); width: 100%; max-width: 300px; }
                         .button:active { transform: scale(0.98); }
                         .button.secondary { background: #333; margin-top: 10px; }
                         .buttons-container { display: flex; flex-direction: column; width: 100%; max-width: 300px; gap: 10px; }
