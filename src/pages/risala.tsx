@@ -1,9 +1,12 @@
 import { useState, lazy, Suspense } from "react";
 import { Footer } from "@/components/Footer";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DIVISIONS, Division } from "@/constants/divisions";
+import { Label } from "@/components/ui/label";
 
 const PhotoEditor = lazy(() => import("@/components/PhotoEditor").then(module => ({ 
   default: module.PhotoEditor 
-})));
+}))) as React.LazyExoticComponent<React.ComponentType<import("@/components/PhotoEditor").PhotoEditorProps>>;
 
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center h-64">
@@ -16,10 +19,12 @@ const RISALA_FRAME_TYPE = 'risala';
 const RisalaFramePage = () => {
   const [userImage, setUserImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedDivision, setSelectedDivision] = useState<Division | "">("");
 
   // Reset to initial state
   const handleBack = () => {
     setUserImage(null);
+    setSelectedDivision("");
   };
 
   return (
@@ -44,6 +49,24 @@ const RisalaFramePage = () => {
               />
             </div>
           </div>
+          {/* Division selector */}
+          <div className="w-full max-w-xs mb-6">
+            <Label htmlFor="division-select" className="text-sm font-medium mb-2 block text-center">
+              Division name:
+            </Label>
+            <Select value={selectedDivision} onValueChange={(value) => setSelectedDivision(value as Division)}>
+              <SelectTrigger id="division-select" className="w-full bg-card/50 backdrop-blur-sm border-border/50">
+                <SelectValue placeholder="Select a division" />
+              </SelectTrigger>
+              <SelectContent>
+                {DIVISIONS.map((division) => (
+                  <SelectItem key={division} value={division}>
+                    {division}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {/* File uploader */}
           <div className="mt-4 mb-8 w-full flex justify-center">
             <label 
@@ -67,6 +90,10 @@ const RisalaFramePage = () => {
                 onChange={e => {
                   const file = e.target.files?.[0];
                   if (!file) return;
+                  if (!selectedDivision) {
+                    alert("Please select a division first");
+                    return;
+                  }
                   setIsUploading(true);
                   const reader = new FileReader();
                   reader.onload = (ev) => {
@@ -83,11 +110,14 @@ const RisalaFramePage = () => {
         </div>
           ) : (
             <Suspense fallback={<LoadingSpinner />}>
-              <PhotoEditor
-                frameType={RISALA_FRAME_TYPE}
-                userImage={userImage}
-                onBack={handleBack}
-              />
+              {selectedDivision && (
+                <PhotoEditor
+                  frameType={RISALA_FRAME_TYPE}
+                  userImage={userImage}
+                  divisionName={selectedDivision as Division}
+                  onBack={handleBack}
+                />
+              )}
             </Suspense>
           )}
         </div>

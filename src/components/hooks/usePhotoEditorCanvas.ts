@@ -4,6 +4,7 @@ import { FrameType, frameDimensions, frameAssets } from "@/assets/frames";
 import { usePhotoEditorFrameLoader } from "./usePhotoEditorFrameLoader";
 import { zoomIn, zoomOut, resetPosition } from "./photoEditorUtils";
 import { drawBlurredBackground } from '@/utils/imageOptimizer';
+import { Division } from "@/constants/divisions";
 
 function getMobileMargin() {
   if (typeof window !== "undefined" && window.innerWidth <= 600) return 20;
@@ -25,10 +26,118 @@ interface TouchState {
 export function usePhotoEditorCanvas({
   frameType,
   userImage,
+  divisionName,
 }: {
   frameType: FrameType;
   userImage: string;
+  divisionName: Division;
 }) {
+  // Helper function to add division text with white background
+  const addDivisionTextToCanvas = (canvas: fabric.Canvas, width: number, height: number, divName: Division) => {
+    // Use Anek Malayalam font
+    const fontFamily = 'Anek Malayalam, sans-serif';
+    
+    // Create "Division:" label text (smaller, olive/greyish-green)
+    const labelText = new fabric.Text('Division:', {
+      fontSize: Math.max(width * 0.018, 10), // Reduced font size, minimum 10px
+      fontFamily: fontFamily,
+      fontWeight: '500',
+      fill: '#6B7A5F', // Olive/greyish-green color (matches sample)
+      originX: 'center',
+      originY: 'top',
+      textAlign: 'center',
+    });
+
+    // Create division name text (larger, teal/bluish-green)
+    const divisionText = new fabric.Text(divName, {
+      fontSize: Math.max(width * 0.030, 14), // Reduced font size, minimum 14px
+      fontFamily: fontFamily,
+      fontWeight: '700', // Bolder to match sample
+      fill: '#2D7A7A', // Teal/bluish-green color (matches sample)
+      originX: 'center',
+      originY: 'top',
+      textAlign: 'center',
+    });
+
+    // Measure text dimensions after creation (fabric needs to calculate these)
+    // Add text to a temporary canvas to get accurate measurements
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    if (tempCtx) {
+      tempCtx.font = `${labelText.fontWeight} ${labelText.fontSize}px ${labelText.fontFamily}`;
+      const labelMetrics = tempCtx.measureText('Division:');
+      tempCtx.font = `${divisionText.fontWeight} ${divisionText.fontSize}px ${divisionText.fontFamily}`;
+      const divisionMetrics = tempCtx.measureText(divName);
+      
+      // Use measured widths for accurate sizing
+      const labelWidth = labelMetrics.width;
+      const divisionWidth = divisionMetrics.width;
+      const labelHeight = labelText.fontSize! * 1.2; // Approximate line height
+      const divisionHeight = divisionText.fontSize! * 1.2;
+      
+      // Calculate dimensions for white background with padding (horizontal layout)
+      // Reduced padding by 50%
+      const padding = Math.max(width * 0.0175, 5); // Minimum 5px padding, or 1.75% of width (50% reduction)
+      const textGap = width * 0.015; // Gap between label and division text (horizontal)
+      const groupWidth = labelWidth + divisionWidth + (padding * 2) + textGap;
+      const groupHeight = Math.max(labelHeight, divisionHeight) + (padding * 2);
+
+      // Scale corner radius proportionally to canvas width to match preview
+      // Preview canvas is typically ~500px, export is 1500-2000px
+      // So scale radius: 15px * (width / 500) to maintain same visual appearance
+      const previewWidth = 500; // Reference preview width
+      const cornerRadius = Math.max(15 * (width / previewWidth), 15); // Scale proportionally, minimum 15px
+
+      // Create white background rectangle with scaled corner radius - 90% opacity
+      const bgRect = new fabric.Rect({
+        width: groupWidth,
+        height: groupHeight,
+        fill: 'rgba(255, 255, 255, 0.9)', // White with 90% opacity
+        originX: 'center',
+        originY: 'top',
+        rx: cornerRadius, // Scaled corner radius to match preview appearance
+        ry: cornerRadius,
+      });
+
+      // Position text elements relative to background (horizontal layout)
+      const startX = -(groupWidth / 2) + padding;
+      labelText.set({
+        left: startX + (labelWidth / 2),
+        top: padding + (groupHeight - padding * 2) / 2 - labelHeight / 2,
+        originX: 'center',
+        originY: 'top',
+      });
+
+      divisionText.set({
+        left: startX + labelWidth + textGap + (divisionWidth / 2),
+        top: padding + (groupHeight - padding * 2) / 2 - divisionHeight / 2,
+        originX: 'center',
+        originY: 'top',
+      });
+
+      // Position background at center
+      bgRect.set({
+        left: 0,
+        top: 0,
+      });
+
+      // Create text group positioned at bottom center of the frame
+      // Position it at 20% from bottom
+      const bottomMargin = height * 0.20; // 20% from bottom
+      const textGroup = new fabric.Group([bgRect, labelText, divisionText], {
+        left: width / 2, // Center horizontally (middle of canvas)
+        top: height - bottomMargin, // Position from bottom
+        originX: 'center', // Group's center point is at left position
+        originY: 'bottom', // Group's bottom point is at top position
+        selectable: false,
+        evented: false,
+      });
+
+      // Add group to canvas and bring to front (above frame)
+      canvas.add(textGroup);
+      canvas.bringToFront(textGroup);
+    }
+  };
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [canvas, setCanvas] = useState<fabric.Canvas | null>(null);
   const [userImageObj, setUserImageObj] = useState<fabric.Image | null>(null);
@@ -37,13 +146,17 @@ export function usePhotoEditorCanvas({
   const [imgNaturalSize, setImgNaturalSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
   const touchStateRef = useRef<TouchState>({ touches: [], lastDistance: null });
 
-  // Calculate canvas size based on frame ratio and device width
+  // Calculate canvas size based on frame ratio and container width
   const getCanvasDisplaySize = () => {
     const margin = getMobileMargin();
-    const deviceWidth = Math.min(typeof window !== "undefined" ? window.innerWidth - margin * 2 : 500, 500);
+    // max-w-md = 28rem = 448px, account for container padding/borders
+    const maxContainerWidth = 448; // max-w-md in pixels
+    const availableWidth = typeof window !== "undefined" 
+      ? Math.min(window.innerWidth - margin * 2, maxContainerWidth)
+      : maxContainerWidth;
     const ratio = frameDimensions[frameType];
     const aspectRatio = ratio.height / ratio.width;
-    return { width: deviceWidth, height: deviceWidth * aspectRatio };
+    return { width: availableWidth, height: availableWidth * aspectRatio };
   };
 
   // Handle mouse wheel zoom
@@ -165,17 +278,50 @@ export function usePhotoEditorCanvas({
   // Always update preview canvas size if frame changes or window resizes
   useEffect(() => {
     const updateCanvasSize = () => {
-      const { width, height } = getCanvasDisplaySize();
-      if (canvas) {
-        canvas.setWidth(width);
-        canvas.setHeight(height);
+      if (canvas && canvasRef.current) {
+        // Get actual container width to ensure canvas fits
+        let containerWidth = 448; // Default max-w-md
+        const parent = canvasRef.current.parentElement;
+        
+        if (parent) {
+          // Check parent's parent (the container div)
+          const container = parent.parentElement;
+          if (container) {
+            const rect = container.getBoundingClientRect();
+            containerWidth = rect.width || 448;
+          } else {
+            const rect = parent.getBoundingClientRect();
+            containerWidth = rect.width || 448;
+          }
+        } else if (typeof window !== "undefined") {
+          // Fallback: use window width with margin
+          const margin = getMobileMargin();
+          containerWidth = Math.min(window.innerWidth - margin * 2, 448);
+        }
+        
+        // Ensure we don't exceed max-w-md (448px)
+        containerWidth = Math.min(containerWidth, 448);
+        
+        // Calculate canvas size based on container width
+        const ratio = frameDimensions[frameType];
+        const aspectRatio = ratio.height / ratio.width;
+        const canvasWidth = containerWidth;
+        const canvasHeight = canvasWidth * aspectRatio;
+        
+        canvas.setWidth(canvasWidth);
+        canvas.setHeight(canvasHeight);
         canvas.calcOffset && canvas.calcOffset();
         canvas.renderAll();
       }
     };
     window.addEventListener("resize", updateCanvasSize);
+    // Use a small delay to ensure container is rendered
+    const timeoutId = setTimeout(updateCanvasSize, 100);
     updateCanvasSize();
-    return () => window.removeEventListener("resize", updateCanvasSize);
+    return () => {
+      window.removeEventListener("resize", updateCanvasSize);
+      clearTimeout(timeoutId);
+    };
   }, [frameType, canvas]);
 
   // Initialize the fabric canvas and event handlers
@@ -183,34 +329,69 @@ export function usePhotoEditorCanvas({
     if (!canvasRef.current) return;
 
     canvas?.dispose();
-    const { width, height } = getCanvasDisplaySize();
+    
+    // Get actual container width to ensure canvas fits
+    // Wait for next frame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      if (!canvasRef.current) return;
+      
+      let containerWidth = 448; // Default max-w-md
+      const parent = canvasRef.current.parentElement;
+      
+      if (parent) {
+        // Check parent's parent (the container div)
+        const container = parent.parentElement;
+        if (container) {
+          const rect = container.getBoundingClientRect();
+          containerWidth = rect.width || 448;
+        } else {
+          const rect = parent.getBoundingClientRect();
+          containerWidth = rect.width || 448;
+        }
+      } else {
+        const { width } = getCanvasDisplaySize();
+        containerWidth = width;
+      }
+      
+      // Ensure we don't exceed max-w-md (448px)
+      containerWidth = Math.min(containerWidth, 448);
+      
+      // Calculate canvas size based on container width
+      const ratio = frameDimensions[frameType];
+      const aspectRatio = ratio.height / ratio.width;
+      const canvasWidth = containerWidth;
+      const canvasHeight = canvasWidth * aspectRatio;
 
-    const fabricCanvas = new fabric.Canvas(canvasRef.current, {
-      width,
-      height,
-      backgroundColor: "#000",
-      preserveObjectStacking: true,
-      selection: false,
-      renderOnAddRemove: true,
+      const fabricCanvas = new fabric.Canvas(canvasRef.current, {
+        width: canvasWidth,
+        height: canvasHeight,
+        backgroundColor: "#000",
+        preserveObjectStacking: true,
+        selection: false,
+        renderOnAddRemove: true,
+      });
+
+      // Add event listeners
+      fabricCanvas.on("mouse:wheel", handleMouseWheel);
+      
+      const canvasElement = fabricCanvas.getElement();
+      canvasElement.addEventListener("touchstart", handleTouchStart, { passive: false });
+      canvasElement.addEventListener("touchmove", handleTouchMove, { passive: false });
+      canvasElement.addEventListener("touchend", handleTouchEnd);
+      canvasElement.addEventListener("touchcancel", handleTouchEnd);
+
+      setCanvas(fabricCanvas);
     });
 
-    // Add event listeners
-    fabricCanvas.on("mouse:wheel", handleMouseWheel);
-    
-    const canvasElement = fabricCanvas.getElement();
-    canvasElement.addEventListener("touchstart", handleTouchStart, { passive: false });
-    canvasElement.addEventListener("touchmove", handleTouchMove, { passive: false });
-    canvasElement.addEventListener("touchend", handleTouchEnd);
-    canvasElement.addEventListener("touchcancel", handleTouchEnd);
-
-    setCanvas(fabricCanvas);
-
     return () => {
-      canvasElement.removeEventListener("touchstart", handleTouchStart);
-      canvasElement.removeEventListener("touchmove", handleTouchMove);
-      canvasElement.removeEventListener("touchend", handleTouchEnd);
-      canvasElement.removeEventListener("touchcancel", handleTouchEnd);
-      fabricCanvas.dispose();
+      if (canvas) {
+        const canvasElement = canvas.getElement();
+        canvasElement.removeEventListener("touchstart", handleTouchStart);
+        canvasElement.removeEventListener("touchmove", handleTouchMove);
+        canvasElement.removeEventListener("touchend", handleTouchEnd);
+        canvasElement.removeEventListener("touchcancel", handleTouchEnd);
+        canvas.dispose();
+      }
     };
   }, [frameType]);
 
@@ -219,6 +400,7 @@ export function usePhotoEditorCanvas({
     canvas,
     frameType,
     userImage,
+    divisionName,
     setImgNaturalSize,
     setUserImageObj,
     setFrameImageObj,
@@ -349,19 +531,25 @@ export function usePhotoEditorCanvas({
                     return;
                   }
 
-                  try {
-                    overlayImg.set({
-                      scaleX: exportW / (overlayImg.width || 1),
-                      scaleY: exportH / (overlayImg.height || 1),
-                      originX: "left",
-                      originY: "top",
-                      left: 0,
-                      top: 0,
-                      selectable: false,
-                      evented: false,
-                    });
-                    exportFabric.add(overlayImg);
-                    exportFabric.bringToFront(overlayImg);
+                  overlayImg.set({
+                    scaleX: exportW / (overlayImg.width || 1),
+                    scaleY: exportH / (overlayImg.height || 1),
+                    originX: "left",
+                    originY: "top",
+                    left: 0,
+                    top: 0,
+                    selectable: false,
+                    evented: false,
+                  });
+                  exportFabric.add(overlayImg);
+                  exportFabric.bringToFront(overlayImg);
+                  
+                  // Wait for font to load, then add division text and export
+                  const addTextAndExport = () => {
+                    // Add division text with white background
+                    if (divisionName) {
+                      addDivisionTextToCanvas(exportFabric, exportW, exportH, divisionName);
+                    }
                     exportFabric.renderAll();
 
                     // Export as JPEG with optimal quality for WhatsApp
@@ -486,6 +674,10 @@ export function usePhotoEditorCanvas({
                         link.click();
                         document.body.removeChild(link);
                       }
+
+                      setIsDownloading(false);
+                      exportFabric.dispose();
+                      resolve();
                     } catch (error) {
                       console.error("Error during download:", error);
                       // Fallback to simple image display
@@ -496,13 +688,22 @@ export function usePhotoEditorCanvas({
                         link.target = "_blank";
                         link.click();
                       }
+                      setIsDownloading(false);
+                      exportFabric.dispose();
+                      reject(error);
                     }
+                  };
 
-                    setIsDownloading(false);
-                    exportFabric.dispose();
-                    resolve();
-                  } catch (error) {
-                    reject(error);
+                  // Wait for font to load before adding text and exporting
+                  if (divisionName) {
+                    document.fonts.ready.then(() => {
+                      addTextAndExport();
+                    }).catch(() => {
+                      // Fallback if font loading fails
+                      addTextAndExport();
+                    });
+                  } else {
+                    addTextAndExport();
                   }
                 },
                 { crossOrigin: "anonymous" }

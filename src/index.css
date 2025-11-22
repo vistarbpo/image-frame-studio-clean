@@ -119,4 +119,17 @@
     position: relative;
     z-index: 1;
   }
+
+  /* Make Fabric.js canvas container responsive */
+  .canvas-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    position: relative !important;
+  }
+
+  .canvas-container canvas {
+    max-width: 100% !important;
+    height: auto !important;
+    width: 100% !important;
+  }
 }

@@ -3,11 +3,14 @@ import { Button } from "@/components/ui/button";
 import { FrameType, frameAssets } from "@/assets/frames";
 import { Upload } from "lucide-react";
 import { Footer } from "@/components/Footer";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DIVISIONS, Division } from "@/constants/divisions";
+import { Label } from "@/components/ui/label";
 
 // Lazy load the PhotoEditor component
 const PhotoEditor = lazy(() => import("@/components/PhotoEditor").then(module => ({ 
   default: module.PhotoEditor 
-})));
+}))) as React.LazyExoticComponent<React.ComponentType<import("@/components/PhotoEditor").PhotoEditorProps>>;
 
 // Loading component for Suspense
 const LoadingSpinner = () => (
@@ -20,11 +23,16 @@ const Index = () => {
   const [selectedFrame, setSelectedFrame] = useState<FrameType>('square');
   const [userImage, setUserImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedDivision, setSelectedDivision] = useState<Division | "">("");
 
   // Handle file upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!selectedDivision) {
+      alert("Please select a division first");
+      return;
+    }
     setIsUploading(true);
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -42,6 +50,7 @@ const Index = () => {
   // Reset to initial state
   const handleBack = () => {
     setUserImage(null);
+    setSelectedDivision("");
   };
 
   return (
@@ -91,6 +100,24 @@ const Index = () => {
               Vertical
             </Button>
           </div>
+          {/* Division selector */}
+          <div className="w-full max-w-xs mb-6">
+            <Label htmlFor="division-select" className="text-sm font-medium mb-2 block text-center">
+              Division name:
+            </Label>
+            <Select value={selectedDivision} onValueChange={(value) => setSelectedDivision(value as Division)}>
+              <SelectTrigger id="division-select" className="w-full bg-card/50 backdrop-blur-sm border-border/50">
+                <SelectValue placeholder="Select a division" />
+              </SelectTrigger>
+              <SelectContent>
+                {DIVISIONS.map((division) => (
+                  <SelectItem key={division} value={division}>
+                    {division}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           {/* File uploader */}
           <div className="mt-4 mb-8 w-full flex justify-center">
             <label 
@@ -121,11 +148,14 @@ const Index = () => {
           ) : (
             // Photo editor view with Suspense
             <Suspense fallback={<LoadingSpinner />}>
-              <PhotoEditor
-                frameType={selectedFrame}
-                userImage={userImage}
-                onBack={handleBack}
-              />
+              {selectedDivision && (
+                <PhotoEditor
+                  frameType={selectedFrame}
+                  userImage={userImage}
+                  divisionName={selectedDivision as Division}
+                  onBack={handleBack}
+                />
+              )}
             </Suspense>
           )}
         </div>
