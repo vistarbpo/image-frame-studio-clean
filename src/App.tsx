@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import RisalaFramePage from "./pages/risala";
 import TaifRisalaFramePage from "./pages/taif-risala";
 import Milad1FramePage from "./pages/milad1";
+import HabibiDayFramePage from "./pages/habibi-day";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +32,7 @@ const App: React.FC = () => {
               <Route path="/risala" element={<RisalaFramePage />} />
               <Route path="/taif-risala" element={<TaifRisalaFramePage />} />
               <Route path="/milad1" element={<Milad1FramePage />} />
+              <Route path="/habibi-day" element={<HabibiDayFramePage />} />
               {/* Redirect all unknown routes to home */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

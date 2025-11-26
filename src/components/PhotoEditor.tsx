@@ -6,7 +6,7 @@ import { Division } from "@/constants/divisions";
 export interface PhotoEditorProps {
   frameType: FrameType;
   userImage: string;
-  divisionName: Division;
+  divisionName: Division | "";
   onBack: () => void;
 }
 

@@ -11,7 +11,7 @@ function getMobileMargin() {
   return 0;
 }
 
-// Track touch points for pinch zoom
+// Track touch points for pinch zoom and drag
 interface Touch {
   x: number;
   y: number;
@@ -21,6 +21,11 @@ interface Touch {
 interface TouchState {
   touches: Touch[];
   lastDistance: number | null;
+  isDragging: boolean;
+  lastTouchX: number | null;
+  lastTouchY: number | null;
+  dragStartX: number | null;
+  dragStartY: number | null;
 }
 
 export function usePhotoEditorCanvas({
@@ -30,10 +35,10 @@ export function usePhotoEditorCanvas({
 }: {
   frameType: FrameType;
   userImage: string;
-  divisionName: Division;
+  divisionName: Division | "";
 }) {
   // Helper function to add division text with white background
-  const addDivisionTextToCanvas = (canvas: fabric.Canvas, width: number, height: number, divName: Division) => {
+  const addDivisionTextToCanvas = (canvas: fabric.Canvas, width: number, height: number, divName: Division | "") => {
     // Use Anek Malayalam font
     const fontFamily = 'Anek Malayalam, sans-serif';
     
@@ -144,7 +149,15 @@ export function usePhotoEditorCanvas({
   const [frameImageObj, setFrameImageObj] = useState<fabric.Image | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [imgNaturalSize, setImgNaturalSize] = useState<{ width: number; height: number }>({ width: 0, height: 0 });
-  const touchStateRef = useRef<TouchState>({ touches: [], lastDistance: null });
+  const touchStateRef = useRef<TouchState>({ 
+    touches: [], 
+    lastDistance: null,
+    isDragging: false,
+    lastTouchX: null,
+    lastTouchY: null,
+    dragStartX: null,
+    dragStartY: null,
+  });
 
   // Calculate canvas size based on frame ratio and container width
   const getCanvasDisplaySize = () => {
@@ -200,7 +213,7 @@ export function usePhotoEditorCanvas({
     canvas.renderAll();
   };
 
-  // Handle touch events for pinch zoom
+  // Handle touch events for pinch zoom and drag
   const handleTouchStart = (e: TouchEvent) => {
     if (!userImageObj || !canvas) return;
 
@@ -211,68 +224,138 @@ export function usePhotoEditorCanvas({
     }));
 
     touchStateRef.current.touches = touches;
-    touchStateRef.current.lastDistance = null;
+
+    // Single touch - prepare for dragging
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      const canvasRect = canvas.getElement().getBoundingClientRect();
+      const pointer = canvas.getPointer({
+        x: touch.clientX - canvasRect.left,
+        y: touch.clientY - canvasRect.top
+      } as any);
+
+      // Check if touch is on the user image
+      const target = canvas.findTarget({
+        x: pointer.x,
+        y: pointer.y
+      } as any, true);
+
+      if (target === userImageObj) {
+        touchStateRef.current.isDragging = true;
+        touchStateRef.current.dragStartX = userImageObj.left || 0;
+        touchStateRef.current.dragStartY = userImageObj.top || 0;
+        touchStateRef.current.lastTouchX = pointer.x;
+        touchStateRef.current.lastTouchY = pointer.y;
+        canvas.setActiveObject(userImageObj);
+        canvas.renderAll();
+      }
+    } else {
+      // Multiple touches - prepare for pinch zoom
+      touchStateRef.current.lastDistance = null;
+      touchStateRef.current.isDragging = false;
+    }
   };
 
   const handleTouchMove = (e: TouchEvent) => {
-    if (!userImageObj || !canvas || e.touches.length !== 2) return;
+    if (!userImageObj || !canvas) return;
 
     e.preventDefault();
-    const touch1 = e.touches[0];
-    const touch2 = e.touches[1];
 
-    // Calculate the distance between two fingers
-    const currentDistance = Math.hypot(
-      touch1.clientX - touch2.clientX,
-      touch1.clientY - touch2.clientY
-    );
-
-    if (touchStateRef.current.lastDistance !== null) {
-      const delta = currentDistance - touchStateRef.current.lastDistance;
-      const zoomFactor = delta > 0 ? 1.02 : 0.98;
-
-      // Calculate center point between fingers
-      const center = {
-        x: (touch1.clientX + touch2.clientX) / 2,
-        y: (touch1.clientY + touch2.clientY) / 2
-      };
-
+    // Single touch - handle dragging
+    if (e.touches.length === 1 && touchStateRef.current.isDragging) {
+      const touch = e.touches[0];
       const canvasRect = canvas.getElement().getBoundingClientRect();
-      const pointer = {
-        x: (center.x - canvasRect.left) / canvas.getZoom(),
-        y: (center.y - canvasRect.top) / canvas.getZoom()
-      };
+      const pointer = canvas.getPointer({
+        x: touch.clientX - canvasRect.left,
+        y: touch.clientY - canvasRect.top
+      } as any);
 
-      let newScaleX = (userImageObj.scaleX || 1) * zoomFactor;
-      let newScaleY = (userImageObj.scaleY || 1) * zoomFactor;
+      if (
+        touchStateRef.current.lastTouchX !== null &&
+        touchStateRef.current.lastTouchY !== null &&
+        touchStateRef.current.dragStartX !== null &&
+        touchStateRef.current.dragStartY !== null
+      ) {
+        const deltaX = pointer.x - touchStateRef.current.lastTouchX;
+        const deltaY = pointer.y - touchStateRef.current.lastTouchY;
 
-      // Clamp zoom level
-      const minZoom = 0.1;
-      const maxZoom = 5;
-      newScaleX = Math.min(Math.max(newScaleX, minZoom), maxZoom);
-      newScaleY = Math.min(Math.max(newScaleY, minZoom), maxZoom);
+        userImageObj.set({
+          left: (userImageObj.left || 0) + deltaX,
+          top: (userImageObj.top || 0) + deltaY
+        });
 
-      // Apply zoom around center point
-      const dx = pointer.x - userImageObj.left!;
-      const dy = pointer.y - userImageObj.top!;
-      const scaleFactor = newScaleX / (userImageObj.scaleX || 1);
+        canvas.renderAll();
+      }
 
-      userImageObj.set({
-        scaleX: newScaleX,
-        scaleY: newScaleY,
-        left: userImageObj.left! + dx * (1 - scaleFactor),
-        top: userImageObj.top! + dy * (1 - scaleFactor)
-      });
-
-      canvas.renderAll();
+      touchStateRef.current.lastTouchX = pointer.x;
+      touchStateRef.current.lastTouchY = pointer.y;
+      return;
     }
 
-    touchStateRef.current.lastDistance = currentDistance;
+    // Two touches - handle pinch zoom
+    if (e.touches.length === 2) {
+      touchStateRef.current.isDragging = false;
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+
+      // Calculate the distance between two fingers
+      const currentDistance = Math.hypot(
+        touch1.clientX - touch2.clientX,
+        touch1.clientY - touch2.clientY
+      );
+
+      if (touchStateRef.current.lastDistance !== null) {
+        const delta = currentDistance - touchStateRef.current.lastDistance;
+        const zoomFactor = delta > 0 ? 1.02 : 0.98;
+
+        // Calculate center point between fingers
+        const center = {
+          x: (touch1.clientX + touch2.clientX) / 2,
+          y: (touch1.clientY + touch2.clientY) / 2
+        };
+
+        const canvasRect = canvas.getElement().getBoundingClientRect();
+        const pointer = {
+          x: (center.x - canvasRect.left) / (canvas.getZoom() || 1),
+          y: (center.y - canvasRect.top) / (canvas.getZoom() || 1)
+        };
+
+        let newScaleX = (userImageObj.scaleX || 1) * zoomFactor;
+        let newScaleY = (userImageObj.scaleY || 1) * zoomFactor;
+
+        // Clamp zoom level
+        const minZoom = 0.1;
+        const maxZoom = 5;
+        newScaleX = Math.min(Math.max(newScaleX, minZoom), maxZoom);
+        newScaleY = Math.min(Math.max(newScaleY, minZoom), maxZoom);
+
+        // Apply zoom around center point
+        const dx = pointer.x - userImageObj.left!;
+        const dy = pointer.y - userImageObj.top!;
+        const scaleFactor = newScaleX / (userImageObj.scaleX || 1);
+
+        userImageObj.set({
+          scaleX: newScaleX,
+          scaleY: newScaleY,
+          left: userImageObj.left! + dx * (1 - scaleFactor),
+          top: userImageObj.top! + dy * (1 - scaleFactor)
+        });
+
+        canvas.renderAll();
+      }
+
+      touchStateRef.current.lastDistance = currentDistance;
+    }
   };
 
   const handleTouchEnd = () => {
     touchStateRef.current.touches = [];
     touchStateRef.current.lastDistance = null;
+    touchStateRef.current.isDragging = false;
+    touchStateRef.current.lastTouchX = null;
+    touchStateRef.current.lastTouchY = null;
+    touchStateRef.current.dragStartX = null;
+    touchStateRef.current.dragStartY = null;
   };
 
   // Always update preview canvas size if frame changes or window resizes
@@ -367,12 +450,31 @@ export function usePhotoEditorCanvas({
         height: canvasHeight,
         backgroundColor: "#000",
         preserveObjectStacking: true,
-        selection: false,
+        selection: true, // Enable selection to allow dragging
         renderOnAddRemove: true,
+        perPixelTargetFind: true,
       });
 
       // Add event listeners
       fabricCanvas.on("mouse:wheel", handleMouseWheel);
+      
+      // Ensure objects can be selected and dragged even when frame overlay is on top
+      fabricCanvas.on("mouse:down", (opt) => {
+        // Skip non-evented objects (like frame overlay)
+        const target = fabricCanvas.findTarget(opt.e, true);
+        if (target && target.evented && target !== fabricCanvas.backgroundImage) {
+          fabricCanvas.setActiveObject(target);
+          fabricCanvas.renderAll();
+        }
+      });
+
+      // Handle object movement for mouse dragging
+      fabricCanvas.on("object:moving", (opt) => {
+        // Ensure the object being moved is the user image
+        if (opt.target === userImageObj) {
+          fabricCanvas.renderAll();
+        }
+      });
       
       const canvasElement = fabricCanvas.getElement();
       canvasElement.addEventListener("touchstart", handleTouchStart, { passive: false });
@@ -415,7 +517,17 @@ export function usePhotoEditorCanvas({
     try {
       // Calculate optimal export dimensions based on frame type
       const { width: exportW, height: exportH } = (() => {
-        // Calculate base size optimized for WhatsApp sharing
+        // Use actual frame dimensions for custom frames
+        if (frameDimensions[frameType]) {
+          const frameDim = frameDimensions[frameType];
+          // Scale down for optimal file size while maintaining quality
+          const scaleFactor = 1800 / Math.max(frameDim.width, frameDim.height);
+          return {
+            width: Math.round(frameDim.width * scaleFactor),
+            height: Math.round(frameDim.height * scaleFactor)
+          };
+        }
+        // Calculate base size optimized for WhatsApp sharing for standard frames
         if (frameType === 'square') {
           return {
             width: 1800,

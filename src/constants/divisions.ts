@@ -10,3 +10,4 @@ export const DIVISIONS = [
 
 export type Division = typeof DIVISIONS[number];
 
+

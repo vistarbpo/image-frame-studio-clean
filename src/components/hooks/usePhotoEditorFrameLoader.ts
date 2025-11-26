@@ -16,7 +16,7 @@ export function usePhotoEditorFrameLoader({
   canvas: fabric.Canvas | null;
   frameType: FrameType;
   userImage: string | null;
-  divisionName: Division;
+  divisionName: Division | "";
   setImgNaturalSize: (s: { width: number; height: number }) => void;
   setUserImageObj: (u: fabric.Image | null) => void;
   setFrameImageObj: (f: fabric.Image | null) => void;
@@ -105,14 +105,17 @@ export function usePhotoEditorFrameLoader({
             left: viewW / 2,
             top: viewH / 2,
             selectable: true,
+            evented: true,
             hasControls: true,
-            hasBorders: false,
+            hasBorders: true,
             lockRotation: true,
             cornerColor: "hsl(262, 83%, 58%)",
             cornerStrokeColor: "white",
             transparentCorners: false,
             cornerSize: 10,
             minScaleLimit: scale * 0.95,
+            hoverCursor: 'move',
+            moveCursor: 'move',
           });
           canvas.add(img);
           setUserImageObj(img);
@@ -127,6 +130,8 @@ export function usePhotoEditorFrameLoader({
               top: 0,
               selectable: false,
               evented: false,
+              excludeFromExport: false,
+              skipTargetFind: true,
             });
             canvas.add(overlayImg);
             canvas.bringToFront(overlayImg);
@@ -159,14 +164,17 @@ export function usePhotoEditorFrameLoader({
           left: viewW / 2,
           top: viewH / 2,
           selectable: true,
+          evented: true,
           hasControls: true,
-          hasBorders: false,
+          hasBorders: true,
           lockRotation: true,
-            cornerColor: "hsl(262, 83%, 58%)",
+          cornerColor: "hsl(262, 83%, 58%)",
           cornerStrokeColor: "white",
           transparentCorners: false,
           cornerSize: 10,
           minScaleLimit: scale * 0.95,
+          hoverCursor: 'move',
+          moveCursor: 'move',
         });
         canvas.add(img);
         setUserImageObj(img);
@@ -180,6 +188,7 @@ export function usePhotoEditorFrameLoader({
             top: 0,
             selectable: false,
             evented: false,
+            skipTargetFind: true,
           });
           canvas.add(overlayImg);
           canvas.bringToFront(overlayImg);
@@ -207,7 +216,7 @@ export function usePhotoEditorFrameLoader({
 }
 
 // Helper function to add division text with white background
-function addDivisionText(canvas: fabric.Canvas, viewW: number, viewH: number, divisionName: Division) {
+function addDivisionText(canvas: fabric.Canvas, viewW: number, viewH: number, divisionName: Division | "") {
   // Use Anek Malayalam font
   const fontFamily = 'Anek Malayalam, sans-serif';
   
