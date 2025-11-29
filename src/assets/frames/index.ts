@@ -27,6 +27,9 @@ export const frameAssets = {
   'habibi-day': {
     bottom: '/habibi-day/frame.png',
   },
+  'sahityotsav': {
+    bottom: '/sahityotsav/frame.png',
+  },
 };
 
 // Frame dimensions - update these if you change the frame PNG files
@@ -40,6 +43,7 @@ export const frameDimensions = {
   'milad1': { width: 1080, height: 1350 }, // Update if new milad1 frame has different dimensions
   'jizan-risala': { width: 1080, height: 1350 }, // Update if new jizan-risala frame has different dimensions
   'habibi-day': { width: 2400, height: 2400 }, // Square frame dimensions
+  'sahityotsav': { width: 2400, height: 2400 }, // Square frame dimensions (update if different)
 };
 
-export type FrameType = 'square' | 'horizontal' | 'vertical' | 'risala' | 'taif-risala' | 'milad1' | 'jizan-risala' | 'habibi-day';
+export type FrameType = 'square' | 'horizontal' | 'vertical' | 'risala' | 'taif-risala' | 'milad1' | 'jizan-risala' | 'habibi-day' | 'sahityotsav';
