@@ -30,6 +30,15 @@ export const frameAssets = {
   'sahityotsav': {
     bottom: '/sahityotsav/frame.png',
   },
+  'makkah-sahithyotsav-square': {
+    bottom: '/makkah-sahithyotsav/Square.png',
+  },
+  'makkah-sahithyotsav-horizontal': {
+    bottom: '/makkah-sahithyotsav/Horizontal.png',
+  },
+  'makkah-sahithyotsav-vertical': {
+    bottom: '/makkah-sahithyotsav/Vertical.png',
+  },
 };
 
 // Frame dimensions - update these if you change the frame PNG files
@@ -44,6 +53,9 @@ export const frameDimensions = {
   'jizan-risala': { width: 1080, height: 1350 }, // Update if new jizan-risala frame has different dimensions
   'habibi-day': { width: 2400, height: 2400 }, // Square frame dimensions
   'sahityotsav': { width: 2400, height: 2400 }, // Square frame dimensions (update if different)
+  'makkah-sahithyotsav-square': { width: 2400, height: 2400 }, // Square frame dimensions
+  'makkah-sahithyotsav-horizontal': { width: 3200, height: 2400 }, // Horizontal frame dimensions
+  'makkah-sahithyotsav-vertical': { width: 2400, height: 3200 }, // Vertical frame dimensions
 };
 
-export type FrameType = 'square' | 'horizontal' | 'vertical' | 'risala' | 'taif-risala' | 'milad1' | 'jizan-risala' | 'habibi-day' | 'sahityotsav';
+export type FrameType = 'square' | 'horizontal' | 'vertical' | 'risala' | 'taif-risala' | 'milad1' | 'jizan-risala' | 'habibi-day' | 'sahityotsav' | 'makkah-sahithyotsav-square' | 'makkah-sahithyotsav-horizontal' | 'makkah-sahithyotsav-vertical';

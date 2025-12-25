@@ -10,6 +10,7 @@ import TaifRisalaFramePage from "./pages/taif-risala";
 import Milad1FramePage from "./pages/milad1";
 import HabibiDayFramePage from "./pages/habibi-day";
 import SahityotsavFramePage from "./pages/sahityotsav";
+import MakkahSahithyotsavFramePage from "./pages/makkah-sahithyotsav";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +36,7 @@ const App: React.FC = () => {
               <Route path="/milad1" element={<Milad1FramePage />} />
               <Route path="/habibi-day" element={<HabibiDayFramePage />} />
               <Route path="/sahityotsav" element={<SahityotsavFramePage />} />
+              <Route path="/makkah-sahithyotsav" element={<MakkahSahithyotsavFramePage />} />
               {/* Redirect all unknown routes to home */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
