@@ -4,8 +4,8 @@ import { FrameType, frameAssets } from "@/assets/frames";
 import { Upload } from "lucide-react";
 import { Footer } from "@/components/Footer";
 
-// Makkah Sahithyotsav specific frame types
-type MakkahSahithyotsavFrameType = 'makkah-sahithyotsav-square' | 'makkah-sahithyotsav-horizontal' | 'makkah-sahithyotsav-vertical';
+// Makkah specific frame types
+type MakkahFrameType = 'makkah-square' | 'makkah-horizontal' | 'makkah-vertical';
 
 // Lazy load the PhotoEditor component
 const PhotoEditor = lazy(() => import("@/components/PhotoEditor").then(module => ({ 
@@ -19,8 +19,8 @@ const LoadingSpinner = () => (
   </div>
 );
 
-const MakkahSahithyotsavFramePage = () => {
-  const [selectedFrame, setSelectedFrame] = useState<MakkahSahithyotsavFrameType>('makkah-sahithyotsav-square');
+const MakkahFramePage = () => {
+  const [selectedFrame, setSelectedFrame] = useState<MakkahFrameType>('makkah-square');
   const [userImage, setUserImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -38,7 +38,7 @@ const MakkahSahithyotsavFramePage = () => {
   };
 
   // Handle frame type selection
-  const handleFrameSelect = (frameType: MakkahSahithyotsavFrameType) => {
+  const handleFrameSelect = (frameType: MakkahFrameType) => {
     setSelectedFrame(frameType);
   };
 
@@ -53,7 +53,7 @@ const MakkahSahithyotsavFramePage = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-purple-500 to-primary bg-clip-text text-transparent">
-              Makkah Sahithyotsav Frame Studio
+              Makkah Frame Studio
             </h1>
           </div>
           {!userImage ? (
@@ -73,22 +73,22 @@ const MakkahSahithyotsavFramePage = () => {
           {/* Frame selector */}
           <div className="flex gap-3 justify-center mb-6">
             <Button
-              variant={selectedFrame === 'makkah-sahithyotsav-square' ? "default" : "outline"}
-              onClick={() => handleFrameSelect('makkah-sahithyotsav-square')}
+              variant={selectedFrame === 'makkah-square' ? "default" : "outline"}
+              onClick={() => handleFrameSelect('makkah-square')}
               className="rounded-full px-6 py-2 transition-all duration-200 hover:scale-105"
             >
               Square
             </Button>
             <Button
-              variant={selectedFrame === 'makkah-sahithyotsav-horizontal' ? "default" : "outline"}
-              onClick={() => handleFrameSelect('makkah-sahithyotsav-horizontal')}
+              variant={selectedFrame === 'makkah-horizontal' ? "default" : "outline"}
+              onClick={() => handleFrameSelect('makkah-horizontal')}
               className="rounded-full px-6 py-2 transition-all duration-200 hover:scale-105"
             >
               Horizontal
             </Button>
             <Button
-              variant={selectedFrame === 'makkah-sahithyotsav-vertical' ? "default" : "outline"}
-              onClick={() => handleFrameSelect('makkah-sahithyotsav-vertical')}
+              variant={selectedFrame === 'makkah-vertical' ? "default" : "outline"}
+              onClick={() => handleFrameSelect('makkah-vertical')}
               className="rounded-full px-6 py-2 transition-all duration-200 hover:scale-105"
             >
               Vertical
@@ -139,5 +139,4 @@ const MakkahSahithyotsavFramePage = () => {
   );
 };
 
-export default MakkahSahithyotsavFramePage;
-
+export default MakkahFramePage;
